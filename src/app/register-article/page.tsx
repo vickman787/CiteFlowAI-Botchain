@@ -1,0 +1,140 @@
+'use client'
+
+import { useState } from 'react'
+import { useAccount } from 'wagmi'
+
+export default function RegisterArticlePage() {
+  const [url, setUrl] = useState('')
+  const [price, setPrice] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const { address: walletAddress } = useAccount()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!walletAddress) {
+      setError('Connect your wallet before registering a source.')
+      return
+    }
+    setLoading(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const res = await fetch('/api/sources/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, price: parseFloat(price) }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to register article')
+      }
+
+      setSuccess(true)
+      setUrl('')
+      
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex-1 flex flex-col items-center pt-12 md:pt-24 content-container">
+      <div className="w-full max-w-2xl">
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-serif font-bold mb-4 text-[var(--color-ink)]">Register Article</h1>
+          <p className="text-lg text-[var(--color-soft-ink)]">
+            Submit your work to the CiteFlowAI network. Set a citation-licence price in USDT.
+          </p>
+          <p className="text-sm text-[var(--color-olive)] mt-3 font-mono">
+            You can only register content from a domain or handle you&apos;ve verified — head to your{' '}
+            <a href="/dashboard" className="text-[var(--color-signal-green)] underline">dashboard</a> to verify ownership first.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="card-panel p-8 sm:p-10">
+          {!walletAddress && (
+            <div className="mb-6 p-4 border border-[var(--color-amber)] text-[var(--color-amber)] bg-[var(--color-amber)]/10 font-mono text-sm rounded flex items-center gap-2">
+              <span>⚠</span>
+              <span>Connect your wallet from the top navigation bar to register a source.</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-6 p-4 border border-[var(--color-rust)] text-[var(--color-rust)] bg-[var(--color-rust)]/5 font-mono text-sm rounded">
+              ERROR: {error}
+            </div>
+          )}
+          
+          {success && (
+            <div className="mb-6 p-4 border border-[var(--color-signal-green)] text-[var(--color-ink)] bg-[var(--color-signal-green)]/10 font-mono text-sm rounded">
+              SUCCESS: Article registered and extracted successfully.
+            </div>
+          )}
+
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="url" className="label-text">
+                Public Article URL
+              </label>
+              <input
+                id="url"
+                type="url"
+                required
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://your-domain.com/article"
+                className="input-field"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="price" className="label-text">
+                Citation Licence Price (USDT)
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-[var(--color-soft-ink)]">$</span>
+                <input
+                  id="price"
+                  type="number"
+                  required
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="0.05"
+                  className="input-field font-mono"
+                  style={{ paddingLeft: '2.5rem' }}
+                  disabled={loading}
+                />
+              </div>
+              <p className="mt-2 text-xs text-[var(--color-olive)]">
+                Amount paid to your wallet each time the AI agent cites this source.
+              </p>
+            </div>
+
+            <div className="pt-6 border-t border-[var(--color-border-subtle)]">
+              <button
+                type="submit"
+                disabled={loading || !walletAddress}
+                title={!walletAddress ? 'Connect your wallet first' : undefined}
+                className="btn btn-primary w-full"
+              >
+                {loading ? 'Extracting...' : !walletAddress ? 'Connect wallet to register' : 'Register Source'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}

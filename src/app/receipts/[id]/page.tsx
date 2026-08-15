@@ -1,9 +1,13 @@
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 import { notFound } from 'next/navigation'
 import { EXPLORER_TX_URL } from '@/lib/chains/botChain'
 
 export default async function ReceiptPage({ params }: { params: { id: string } }) {
-  const supabase = await createClient()
+  // Admin client: a receipt link is meant to be shareable/viewable by anyone
+  // with the link (e.g. the creator who got paid, not just the researcher
+  // who ran the query) — payment_authorizations/payment_settlements' RLS
+  // policies scope rows to the original researcher's own auth.uid().
+  const supabase = createAdminClient()
 
   const { data: auth } = await supabase
     .from('payment_authorizations')

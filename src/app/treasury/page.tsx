@@ -1,7 +1,10 @@
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 
 export default async function TreasuryPage() {
-  const supabase = await createClient()
+  // Admin client: this is a public transparency page (global daily spending
+  // limits, not user-specific), but treasury_limits' RLS policy only grants
+  // the `authenticated` role access — anonymous visitors would see nothing.
+  const supabase = createAdminClient()
 
   // Get current date string in YYYY-MM-DD
   const today = new Date().toISOString().split('T')[0]

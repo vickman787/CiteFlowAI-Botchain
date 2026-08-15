@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 import StatCounter from '@/components/StatCounter'
 import { getNetworkStats } from '@/lib/stats'
 
@@ -15,7 +15,12 @@ function timeAgo(dateString: string) {
 }
 
 export default async function LandingPage() {
-  const supabase = await createClient()
+  // Admin client: this panel shows public, network-wide recent activity to
+  // any visitor (including anonymous ones), not the current viewer's own
+  // payments — payment_authorizations' RLS policy scopes rows to
+  // auth.uid(), which would return nothing for anonymous visitors and only
+  // the viewer's own history otherwise (same bug class as getNetworkStats).
+  const supabase = createAdminClient()
 
   // Fetch the latest 3 settled payments to display real network activity
   const { data: recentPayments } = await supabase

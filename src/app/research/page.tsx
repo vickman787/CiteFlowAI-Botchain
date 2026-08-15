@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { Trash2 } from 'lucide-react'
-import { useAccount } from 'wagmi'
 import { writeContract, waitForTransactionReceipt } from 'wagmi/actions'
 import { parseUnits } from 'viem'
 import { wagmiConfig } from '@/lib/wagmi/config'
-import { botChain, USDT_ADDRESS, USDT_DECIMALS } from '@/lib/chains/botChain'
+import { botChain, USDT_ADDRESS, USDT_DECIMALS, EXPLORER_TX_URL } from '@/lib/chains/botChain'
 import { ERC20_TRANSFER_ABI } from '@/lib/payments/botchain'
+import { useWalletAuth } from '@/lib/hooks/useWalletAuth'
 
 const PAYOUTS_ADDRESS = process.env.NEXT_PUBLIC_PAYOUTS_CONTRACT_ADDRESS as `0x${string}` | undefined
 
@@ -19,7 +19,9 @@ export default function ResearchWorkspacePage() {
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const { address: walletAddress, isConnected } = useAccount()
+  // Funding a session spends real USDT, so this requires a completed sign-in,
+  // not just a connected wallet (which can auto-reconnect silently).
+  const { isSignedIn } = useWalletAuth()
 
   interface HistoryItem {
     id?: string;
@@ -59,8 +61,8 @@ export default function ResearchWorkspacePage() {
     setProgressLog([])
 
     try {
-      if (!walletAddress || !isConnected) {
-        throw new Error('Wallet not connected. Please connect your wallet first.');
+      if (!isSignedIn) {
+        throw new Error('Sign in with your wallet first.');
       }
       if (!PAYOUTS_ADDRESS) {
         throw new Error('Payouts contract is not configured yet.');
@@ -193,15 +195,15 @@ export default function ResearchWorkspacePage() {
           </div>
           <button
             type="submit"
-            disabled={loading || !isConnected}
+            disabled={loading || !isSignedIn}
             className="font-mono font-bold text-sm bg-[var(--color-signal-green)] text-[var(--color-paper)] px-8 py-4 md:py-0 disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 transition-all cursor-pointer"
           >
             {loading ? 'RUNNING…' : 'EXECUTE'}
           </button>
         </div>
-        {!isConnected && (
+        {!isSignedIn && (
           <div className="mt-3 font-mono text-xs text-[var(--color-amber)]">
-            ⚠ wallet not connected — connect to execute queries
+            ⚠ not signed in — connect and sign in with your wallet to execute queries
           </div>
         )}
       </form>
@@ -306,7 +308,7 @@ export default function ResearchWorkspacePage() {
                       <div className="mb-2"><span className="tag">SETTLED ✓</span></div>
                       {source.receipt?.transactionHash && (
                         <a
-                          href={`https://scan.botchain.ai/tx/${source.receipt.transactionHash}`}
+                          href={`${EXPLORER_TX_URL}/tx/${source.receipt.transactionHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-[var(--color-soft-ink)] hover:text-[var(--color-signal-green)] break-all max-w-xs underline"

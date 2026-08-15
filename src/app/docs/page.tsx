@@ -12,15 +12,9 @@ export default function DocsPage() {
           Everything you need to know about using CiteFlowAI, whether you are researching topics or registering your own intellectual property.
         </p>
 
-        {/* Video Guide */}
-        <div className="relative w-full aspect-video rounded overflow-hidden shadow-lg border border-[var(--color-border-subtle)]">
-          <iframe
-            src="https://www.youtube.com/embed/yTErl_OAeyI"
-            title="CiteFlowAI Video Guide"
-            className="absolute top-0 left-0 w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
+        {/* Video Guide — TODO: record a BOT Chain walkthrough to replace this placeholder */}
+        <div className="relative w-full aspect-video rounded overflow-hidden shadow-lg border border-[var(--color-border-subtle)] bg-[var(--color-panel-deep)] flex items-center justify-center">
+          <p className="font-mono text-sm text-[var(--color-faint)]">Video walkthrough coming soon</p>
         </div>
       </div>
 
@@ -107,9 +101,9 @@ export default function DocsPage() {
           
           <div className="space-y-8">
             <div className="bg-[var(--color-paper)] p-6 border border-[var(--color-border-subtle)] rounded shadow-sm">
-              <h3 className="text-xl font-bold mb-3">1. Universal Identity (Circle + Supabase)</h3>
+              <h3 className="text-xl font-bold mb-3">1. Universal Identity (Wallet-Based)</h3>
               <p className="text-[var(--color-soft-ink)] mb-4">
-                There are no separate "user" or "creator" accounts, and absolutely no passwords. Your Circle Wallet is your entire identity. The moment you connect your wallet via the navbar, our backend automatically maps your address to your creator profile. You never have to manually configure payment settings!
+                There are no separate "user" or "creator" accounts, and absolutely no passwords. Your connected wallet is your entire identity. The moment you connect and sign in via the navbar, our backend automatically maps your address to your creator profile. You never have to manually configure payment settings!
               </p>
             </div>
 
@@ -120,7 +114,7 @@ export default function DocsPage() {
               </p>
               <ul className="list-disc pl-5 space-y-2 text-[var(--color-ink)]">
                 <li>Open the <strong>Verify Ownership</strong> panel on your Dashboard — it shows a unique verification code tied to your account.</li>
-                <li>Prove control of a <strong>domain</strong> (add a meta tag or a <code className="px-1.5 py-0.5 bg-[var(--color-panel-deep)] rounded text-sm">/.well-known/citeflow.txt</code> file with the code), an <strong>X</strong> account (post the code in a tweet), a <strong>Medium</strong> profile, a <strong>Substack</strong>, or an <strong>Arc House</strong> account (publish the code in a post on a public board) — then paste the link back into the panel.</li>
+                <li>Prove control of a <strong>domain</strong> (add a meta tag or a <code className="px-1.5 py-0.5 bg-[var(--color-panel-deep)] rounded text-sm">/.well-known/citeflow.txt</code> file with the code), an <strong>X</strong> account (post the code in a tweet), a <strong>Medium</strong> profile, or a <strong>Substack</strong> — then paste the link back into the panel.</li>
                 <li>Once verified, that identity is <strong>permanently and exclusively yours</strong> — enforced at the database level, not just in the UI. You can then register any article on that domain or handle without repeating this step.</li>
                 <li>You can verify as many domains and platforms as you actually own; there&apos;s no limit.</li>
               </ul>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useWalletAuth } from '@/lib/hooks/useWalletAuth'
 
 export default function RegisterArticlePage() {
   const [url, setUrl] = useState('')
@@ -9,12 +9,14 @@ export default function RegisterArticlePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const { address: walletAddress } = useAccount()
+  // A connected wallet isn't enough — registering a source requires an
+  // authenticated Supabase session (the sign-in-with-wallet step).
+  const { isSignedIn } = useWalletAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!walletAddress) {
-      setError('Connect your wallet before registering a source.')
+    if (!isSignedIn) {
+      setError('Sign in with your wallet before registering a source.')
       return
     }
     setLoading(true)
@@ -60,10 +62,10 @@ export default function RegisterArticlePage() {
         </div>
 
         <form onSubmit={handleSubmit} className="card-panel p-8 sm:p-10">
-          {!walletAddress && (
+          {!isSignedIn && (
             <div className="mb-6 p-4 border border-[var(--color-amber)] text-[var(--color-amber)] bg-[var(--color-amber)]/10 font-mono text-sm rounded flex items-center gap-2">
               <span>⚠</span>
-              <span>Connect your wallet from the top navigation bar to register a source.</span>
+              <span>Connect and sign in with your wallet from the top navigation bar to register a source.</span>
             </div>
           )}
 
@@ -125,11 +127,11 @@ export default function RegisterArticlePage() {
             <div className="pt-6 border-t border-[var(--color-border-subtle)]">
               <button
                 type="submit"
-                disabled={loading || !walletAddress}
-                title={!walletAddress ? 'Connect your wallet first' : undefined}
+                disabled={loading || !isSignedIn}
+                title={!isSignedIn ? 'Sign in with your wallet first' : undefined}
                 className="btn btn-primary w-full"
               >
-                {loading ? 'Extracting...' : !walletAddress ? 'Connect wallet to register' : 'Register Source'}
+                {loading ? 'Extracting...' : !isSignedIn ? 'Sign in to register' : 'Register Source'}
               </button>
             </div>
           </div>

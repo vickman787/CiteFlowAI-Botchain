@@ -4,8 +4,15 @@ import hre from 'hardhat'
 // 288k+ holders, unlike every "USDC"-labelled token on the same chain).
 const MAINNET_USDT = '0xaBabc7Ddc03e501d190C676BF3d92ef0e6e87a3C'
 
+// Testnet USDT — confirmed via the explorer's token API (751 holders, by far
+// the largest of ~25 "USDT"-labelled tokens on testnet; every other one is a
+// throwaway test/mock token with single-digit holders).
+const TESTNET_USDT = '0x75edC9335175Fc0552D51D48439F229c10420fe3'
+
 async function main() {
-  const usdtAddress = process.env.USDT_CONTRACT_ADDRESS || MAINNET_USDT
+  const usdtAddress =
+    process.env.USDT_CONTRACT_ADDRESS ||
+    (hre.network.name === 'botTestnet' ? TESTNET_USDT : MAINNET_USDT)
 
   console.log(`Deploying CiteFlowPayouts with USDT = ${usdtAddress} on network ${hre.network.name}...`)
 

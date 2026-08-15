@@ -3,24 +3,25 @@ import { createClient } from '@/utils/supabase/server'
 import { embedDocuments, serializeVector } from '@/lib/ai/embeddings'
 import { safeFetch } from '@/lib/net/safe-fetch'
 import { resolveOwningIdentity } from '@/lib/verification/verify'
-import { isArcUrl, resolveArcPost } from '@/lib/verification/resolve'
+import { isXUrl, resolveXPost } from '@/lib/verification/resolve'
 import crypto from 'crypto'
+
+function stripTags(html: string): string {
+  return html
+    .replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '')
+    .replace(/<style[^>]*>([\S\s]*?)<\/style>/gmi, '')
+    .replace(/<\/?[^>]+(>|$)/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
 
 function extractMetadata(html: string) {
   // Extremely rudimentary metadata extraction regex for demonstration
   // In production, we would use cheerio and sanitize-html
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
   const title = titleMatch ? titleMatch[1].trim() : 'Untitled'
-  
-  // Naive text extraction (strip tags)
-  const readableText = html
-    .replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '')
-    .replace(/<style[^>]*>([\S\s]*?)<\/style>/gmi, '')
-    .replace(/<\/?[^>]+(>|$)/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    
-  return { title, readableText }
+
+  return { title, readableText: stripTags(html) }
 }
 
 export async function registerArticle(targetUrl: string, creatorId: string, price: number = 0.00) {
@@ -40,17 +41,13 @@ export async function registerArticle(targetUrl: string, creatorId: string, pric
     let title = 'Untitled'
     let readableText = ''
 
-    // 2. Arc House pages are a client-rendered shell: the post body lives inside
-    // a <script> block that generic extraction strips, so stripping tags here
-    // would embed navigation chrome instead of the article. Read the structured
-    // data directly.
-    if (isArcUrl(normalizedUrl)) {
-      const post = await resolveArcPost(normalizedUrl)
-      title = post.title
-      readableText = post.text
-      // Store the canonical form. The same post resolves from both /home/forum/
-      // and /public/forum/, and the source row is keyed on its URL, so without
-      // this one post could be registered — and paid — twice.
+    // 2. X posts are a client-rendered shell — the tweet body isn't in the
+    // static HTML, so read it from the same public oEmbed endpoint already
+    // used to verify ownership, rather than generic scraping.
+    if (isXUrl(normalizedUrl)) {
+      const post = await resolveXPost(normalizedUrl)
+      readableText = stripTags(post.text)
+      title = readableText.length > 80 ? `${readableText.slice(0, 80)}…` : (readableText || `Post by @${post.authorHandle}`)
       normalizedUrl = post.canonicalUrl
     } else {
       // 3. Try standard fetch first (with SSRF protection)
@@ -173,7 +170,8 @@ export async function registerArticle(targetUrl: string, creatorId: string, pric
         ...(embeddings ? { embedding: serializeVector(embeddings[i]) } : {})
       }))
 
-      await supabase.from('source_chunks').insert(chunkInserts)
+      const { error: chunkError } = await supabase.from('source_chunks').insert(chunkInserts)
+      if (chunkError) throw new Error(`Failed to store article content: ${chunkError.message}`)
     }
 
     return { success: true, sourceId }

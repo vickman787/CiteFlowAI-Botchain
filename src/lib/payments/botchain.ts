@@ -62,8 +62,8 @@ export interface PayoutEntry {
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as const
 
 // Pays every cited creator and refunds unspent budget in a single BOT Chain
-// transaction, via the CiteFlowPayouts contract's distribute(). Replaces the old
-// per-citation Circle Gateway transfers with one auditable settlement per session.
+// transaction, via the CiteFlowPayouts contract's distribute() — one
+// auditable settlement per research session.
 export async function settleSession(
   sessionId: string,
   payouts: PayoutEntry[],

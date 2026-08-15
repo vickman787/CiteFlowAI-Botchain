@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
+import { EXPLORER_TX_URL } from '@/lib/chains/botChain'
 
 export default async function ReceiptPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
@@ -54,7 +55,7 @@ export default async function ReceiptPage({ params }: { params: { id: string } }
               <div>
                 <span className="opacity-60 block">BOT Chain Transaction:</span>
                 <a
-                  href={`https://scan.botchain.ai/tx/${settlement.transaction_hash}`}
+                  href={`${EXPLORER_TX_URL}/tx/${settlement.transaction_hash}`}
                   target="_blank"
                   rel="noreferrer"
                   className="break-all text-[var(--color-ink)] underline hover:text-signal-green transition-colors"

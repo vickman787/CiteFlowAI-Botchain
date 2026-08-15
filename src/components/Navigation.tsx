@@ -1,13 +1,14 @@
 "use client"
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, LogIn, LogOut, Copy, Check, ExternalLink, ChevronDown } from "lucide-react";
 import { useAccount, useDisconnect, useReadContract } from "wagmi";
 import { formatUnits } from "viem";
 import { createClient } from "@/utils/supabase/client";
-import { USDT_ADDRESS, USDT_DECIMALS, botChain } from "@/lib/chains/botChain";
+import { USDT_ADDRESS, USDT_DECIMALS, botChain, EXPLORER_TX_URL } from "@/lib/chains/botChain";
+import { useMounted } from "@/lib/hooks/useMounted";
 import WalletModal from "./WalletModal";
 
 const ERC20_BALANCE_ABI = [
@@ -38,10 +39,19 @@ export function Navigation({ initialUser }: { initialUser?: any }) {
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
   const walletMenuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const supabase = createClient();
 
+  const mounted = useMounted();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+
+  // Never trust wallet state until we're past hydration — the server always
+  // renders "disconnected" (it can't know), but a browser wallet that already
+  // authorized this origin can report "connected" on the very first client
+  // render, which would otherwise mismatch the server-rendered HTML.
+  const walletConnected = mounted && isConnected && !!address;
+  const walletSignedIn = walletConnected && !!user;
 
   const { data: rawBalance } = useReadContract({
     address: USDT_ADDRESS,
@@ -49,7 +59,7 @@ export function Navigation({ initialUser }: { initialUser?: any }) {
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     chainId: botChain.id,
-    query: { enabled: !!address, refetchInterval: 15000 },
+    query: { enabled: walletConnected, refetchInterval: 15000 },
   });
 
   const walletBalance = rawBalance !== undefined ? formatUnits(rawBalance, USDT_DECIMALS) : null;
@@ -153,7 +163,7 @@ export function Navigation({ initialUser }: { initialUser?: any }) {
 
         {/* Wallet — pushed to the far right */}
         <div className="hidden md:flex items-center ml-auto flex-shrink-0">
-          {isConnected && address ? (
+          {walletSignedIn ? (
             <div className="relative" ref={walletMenuRef}>
               <button
                 type="button"
@@ -193,7 +203,7 @@ export function Navigation({ initialUser }: { initialUser?: any }) {
                   </button>
                   <a
                     role="menuitem"
-                    href={`https://scan.botchain.ai/address/${address}`}
+                    href={`${EXPLORER_TX_URL}/address/${address}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setIsWalletMenuOpen(false)}
@@ -248,7 +258,7 @@ export function Navigation({ initialUser }: { initialUser?: any }) {
             </Link>
           ))}
           <div className="h-px w-full bg-[var(--color-border-subtle)] my-2"></div>
-          {!(isConnected && address) && (
+          {!walletSignedIn && (
             <button
               onClick={() => {
                 setIsOpen(false);
@@ -261,7 +271,7 @@ export function Navigation({ initialUser }: { initialUser?: any }) {
             </button>
           )}
 
-          {isConnected && address && (
+          {walletSignedIn && (
             <>
               <div className="h-px w-full bg-[var(--color-border-subtle)] my-2"></div>
               <div className="flex flex-col gap-3 py-2">
@@ -286,7 +296,7 @@ export function Navigation({ initialUser }: { initialUser?: any }) {
                       {isCopied ? <Check size={16} className="text-[var(--color-signal-green)]" /> : <Copy size={16} />}
                     </button>
                     <a
-                      href={`https://scan.botchain.ai/address/${address}`}
+                      href={`${EXPLORER_TX_URL}/address/${address}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 hover:text-[var(--color-signal-green)] rounded transition-colors"
@@ -318,6 +328,11 @@ export function Navigation({ initialUser }: { initialUser?: any }) {
         onClose={() => setIsWalletModalOpen(false)}
         onSuccess={() => {
           setIsWalletModalOpen(false);
+          // The sign-in API route sets the Supabase session cookie server-side,
+          // which the client SDK's onAuthStateChange doesn't pick up on its own —
+          // refresh so the server-rendered user context (and this nav) updates
+          // immediately instead of lagging behind.
+          router.refresh();
         }}
       />
     </nav>

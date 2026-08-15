@@ -4,7 +4,7 @@ import { generateVerificationCode, verifyIdentity, saveVerifiedIdentity } from '
 import { z } from 'zod'
 
 const verifySchema = z.object({
-  platform: z.enum(['domain', 'x', 'medium', 'substack', 'arc']),
+  platform: z.enum(['domain', 'x', 'medium', 'substack']),
   proofUrl: z.string().url(),
 })
 

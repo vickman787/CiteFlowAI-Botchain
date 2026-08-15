@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     // address and was signed recently. There's no server-stored nonce (kept
     // stateless), so a stolen signature is only replayable within this window.
     const addressLine = `Address: ${claimedAddress}`
-    if (!message.toLowerCase().includes(addressLine)) {
+    if (!message.toLowerCase().includes(addressLine.toLowerCase())) {
       return NextResponse.json({ error: 'Signed message does not match the claimed address' }, { status: 400 })
     }
 
@@ -44,20 +44,40 @@ export async function POST(request: NextRequest) {
     // 2. We now cryptographically know the caller owns this wallet address.
     // Create an "invisible Supabase session" for them, same pattern as before.
     const supabase = await createClient()
-    const email = `${claimedAddress}@citeflow.local`
+    // Supabase Auth rejects non-public TLDs like ".local" as an invalid email
+    // format, so this has to look like a real address even though it's never
+    // actually sent anywhere — citeflowai.xyz is a domain we actually own.
+    const email = `${claimedAddress}@wallet.citeflowai.xyz`
     const password = crypto.createHash('sha256').update(claimedAddress + process.env.WALLET_AUTH_SECRET).digest('hex')
 
     let userId: string | null = null
+    const adminAuth = createAdminClient()
 
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (signInError) {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password })
-      if (signUpError) {
-        console.error('Invisible Supabase SignUp Error:', signUpError)
+      // New identity (or a leftover unconfirmed one) — (re)create it
+      // pre-confirmed via the admin API. Supabase's default project settings
+      // require email confirmation before signInWithPassword works, and this
+      // address is never a real inbox, so that confirmation can never
+      // naturally happen; email_confirm: true bypasses it server-side.
+      const { data: createData, error: createError } = await adminAuth.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      })
+
+      if (createError) {
+        console.error('Invisible Supabase User Creation Error:', createError)
         return NextResponse.json({ error: 'Failed to create internal user session' }, { status: 500 })
       }
-      userId = signUpData.user?.id ?? null
+
+      const { data: retrySignIn, error: retrySignInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (retrySignInError) {
+        console.error('Invisible Supabase Sign-In After Create Error:', retrySignInError)
+        return NextResponse.json({ error: 'Failed to create internal user session' }, { status: 500 })
+      }
+      userId = retrySignIn.user?.id ?? createData.user?.id ?? null
     } else {
       userId = signInData.user?.id ?? null
     }
@@ -65,8 +85,6 @@ export async function POST(request: NextRequest) {
     if (userId) {
       // Wait for Supabase's handle_new_user trigger to finish creating the row.
       await new Promise((resolve) => setTimeout(resolve, 500))
-
-      const adminAuth = createAdminClient()
 
       const { error: profileError } = await adminAuth
         .from('profiles')

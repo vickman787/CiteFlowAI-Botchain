@@ -23,10 +23,24 @@ export default function WalletModal({ isOpen, onClose, onSuccess }: WalletModalP
   const { signMessageAsync } = useSignMessage();
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    setError(null);
+
+    // The browser wallet can already be connected here — e.g. MetaMask
+    // auto-reconnects to any origin it previously authorized, without a
+    // prompt. That only means a wallet is connected, not that this address
+    // has completed our sign-in-with-wallet step, so skip straight past
+    // connector selection into the chain check / signature.
+    if (isConnected && address) {
+      if (chainId !== botChain.id) {
+        setModalState('WRONG_CHAIN');
+      } else {
+        signInWithWallet(address);
+      }
+    } else {
       setModalState('CHOOSE_CONNECTOR');
-      setError(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -106,13 +120,13 @@ export default function WalletModal({ isOpen, onClose, onSuccess }: WalletModalP
           <h2 className="text-xl font-semibold mb-1">
             {modalState === 'CHOOSE_CONNECTOR' ? 'Connect Wallet' :
              modalState === 'CONNECTING' ? 'Connecting…' :
-             modalState === 'WRONG_CHAIN' ? 'Switch to BOT Chain' :
+             modalState === 'WRONG_CHAIN' ? `Switch to ${botChain.name}` :
              modalState === 'SIGNING' ? 'Verify Ownership' : 'Connected!'}
           </h2>
           <p className="text-sm text-[var(--color-soft-ink)]">
             {modalState === 'CHOOSE_CONNECTOR' && 'Connect any EVM wallet to register sources and fund research.'}
             {modalState === 'SIGNING' && 'Sign a message in your wallet to prove you own this address. This is free — no gas, no funds move.'}
-            {modalState === 'WRONG_CHAIN' && 'Your wallet needs to switch to BOT Chain Mainnet.'}
+            {modalState === 'WRONG_CHAIN' && `Your wallet needs to switch to ${botChain.name}.`}
           </p>
         </div>
 
@@ -156,12 +170,12 @@ export default function WalletModal({ isOpen, onClose, onSuccess }: WalletModalP
             <button onClick={handleRetrySwitch} disabled={isSwitching} className="btn btn-primary w-full mb-4">
               {isSwitching ? 'Switching…' : 'Switch network'}
             </button>
-            <p className="text-xs text-[var(--color-soft-ink)] mb-2">If your wallet doesn&apos;t prompt automatically, add BOT Chain manually:</p>
+            <p className="text-xs text-[var(--color-soft-ink)] mb-2">Some wallets (e.g. Rabby) don&apos;t support switching networks programmatically — add {botChain.name} manually instead:</p>
             <div className="font-mono text-xs bg-[var(--color-panel-deep)] p-3 rounded border border-[var(--color-border-subtle)] space-y-1">
-              <div>Chain ID: 677</div>
-              <div>RPC: https://rpc.botchain.ai</div>
-              <div>Currency: BOT</div>
-              <div>Explorer: https://scan.botchain.ai</div>
+              <div>Chain ID: {botChain.id}</div>
+              <div>RPC: {botChain.rpcUrls.default.http[0]}</div>
+              <div>Currency: {botChain.nativeCurrency.symbol}</div>
+              <div>Explorer: {botChain.blockExplorers.default.url}</div>
             </div>
           </div>
         )}

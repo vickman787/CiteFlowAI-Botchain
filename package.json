@@ -9,7 +9,8 @@
     "lint": "eslint",
     "compile": "hardhat compile",
     "deploy:testnet": "hardhat run scripts/deploy.ts --network botTestnet",
-    "deploy:mainnet": "hardhat run scripts/deploy.ts --network botMainnet"
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network botMainnet",
+    "apply-migrations": "node scripts/apply-migrations.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -35,6 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "hardhat": "^2.22.0",
+    "pg": "^8.13.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

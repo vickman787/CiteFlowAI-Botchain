@@ -24,9 +24,9 @@ const ERC20_BALANCE_ABI = [
 function LogoMark({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 512 512" aria-hidden="true">
-      <rect width="512" height="512" rx="118" fill="#C6FF4D" />
-      <path d="M133,172 h96 v72 h-48 v32 h48 v64 h-96 z" fill="#0C0E0A" />
-      <path d="M283,172 h96 v72 h-48 v32 h48 v64 h-96 z" fill="#0C0E0A" />
+      <rect width="512" height="512" rx="118" fill="var(--color-signal-green)" />
+      <path d="M133,172 h96 v72 h-48 v32 h48 v64 h-96 z" fill="var(--color-paper)" />
+      <path d="M283,172 h96 v72 h-48 v32 h48 v64 h-96 z" fill="var(--color-paper)" />
     </svg>
   );
 }

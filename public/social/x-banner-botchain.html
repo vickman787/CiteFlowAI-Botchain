@@ -1,0 +1,202 @@
+<title>CiteFlow BOT Chain Banner</title>
+<style>
+  :root {
+    --bg: #0A0E13;
+    --grid-line: rgba(197, 224, 235, 0.055);
+    --ink: #DCEAF2;
+    --soft-ink: #7E97A3;
+    --faint: #47575F;
+    --signal: #3FE7FF;
+    --signal-glow: rgba(63, 231, 255, 0.24);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #050708;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .stage {
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .stage-label {
+    font-family: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #4A5259;
+  }
+
+  .banner {
+    width: 1500px;
+    height: 500px;
+    max-width: 100%;
+    aspect-ratio: 1500 / 500;
+    position: relative;
+    background: var(--bg);
+    overflow: hidden;
+    font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, monospace;
+    box-shadow: 0 40px 100px -30px rgba(0,0,0,0.8);
+  }
+
+  /* faint terminal grid */
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 12.5% 25%;
+  }
+
+  /* scanline texture */
+  .scan {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,0.16) 2px 4px);
+    opacity: 0.5;
+  }
+
+  /* ambient glow behind the mark */
+  .glow {
+    position: absolute;
+    top: -20%;
+    left: -6%;
+    width: 46%;
+    height: 140%;
+    background: radial-gradient(closest-side, var(--signal-glow), transparent 70%);
+    filter: blur(10px);
+    opacity: 0.55;
+  }
+
+  .content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 46px 64px;
+  }
+
+  .prompt {
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    color: var(--faint);
+  }
+  .prompt b { color: var(--soft-ink); font-weight: 600; }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+  }
+
+  .mark {
+    width: 84px;
+    height: 84px;
+    flex-shrink: 0;
+  }
+
+  .wordmark {
+    font-size: 68px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .wordmark .accent { color: var(--signal); text-shadow: 0 0 34px var(--signal-glow); }
+
+  .tagline {
+    margin-top: 20px;
+    font-size: 22px;
+    color: var(--soft-ink);
+    letter-spacing: 0.01em;
+  }
+
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--signal);
+    box-shadow: 0 0 12px var(--signal);
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+
+  .status b { color: var(--signal); font-weight: 700; }
+  .status span.sep { color: var(--faint); margin: 0 2px; }
+  .status span.live { color: var(--faint); font-weight: 500; }
+
+  .footer-right {
+    font-size: 14px;
+    color: var(--faint);
+    letter-spacing: 0.02em;
+  }
+</style>
+
+<div class="stage">
+  <div class="stage-label">1500 × 500 &mdash; X header preview</div>
+  <div class="banner">
+    <div class="grid"></div>
+    <div class="glow"></div>
+
+    <div class="content">
+      <div class="prompt"><b>~/citeflow</b> $ init --pay-per-citation --chain=bot</div>
+
+      <div>
+        <div class="brand-row">
+          <svg class="mark" viewBox="0 0 512 512" aria-hidden="true">
+            <rect width="512" height="512" rx="118" fill="#3FE7FF" />
+            <path d="M133,172 h96 v72 h-48 v32 h48 v64 h-96 z" fill="#0A0E13" />
+            <path d="M283,172 h96 v72 h-48 v32 h48 v64 h-96 z" fill="#0A0E13" />
+          </svg>
+          <div class="wordmark">cite<span class="accent">flow</span>_ai</div>
+        </div>
+        <div class="tagline">Every citation pays its author.</div>
+      </div>
+
+      <div class="footer">
+        <div class="status">
+          <span class="dot"></span>
+          <b>BOT&#8209;CHAIN</b>
+          <span class="sep">&middot;</span>
+          <span class="live">LIVE</span>
+        </div>
+        <div class="footer-right">No subscriptions. No scraping. Just receipts.</div>
+      </div>
+    </div>
+
+    <div class="scan"></div>
+  </div>
+</div>

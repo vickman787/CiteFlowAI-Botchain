@@ -109,10 +109,12 @@ export async function POST(request: NextRequest) {
           )
 
           // Mark session complete and save the result payload
-          await supabase
+          const { error: completeError } = await supabase
             .from('research_sessions')
             .update({ status: 'completed', result: result })
             .eq('id', session.id)
+
+          if (completeError) console.error('Failed to mark session completed:', completeError)
 
           pushUpdate('done', { result, sessionId: session.id })
           controller.close()

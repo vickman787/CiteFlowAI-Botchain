@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 
 export const CREATOR_SHARE = 0.8 // 20% platform fee
 
@@ -9,9 +9,13 @@ export interface NetworkStats {
   registeredSources: number
 }
 
-// Live network stats from the ledger — used by the ticker and the landing page tiles
+// Live network stats from the ledger — used by the ticker and the landing page tiles.
+// Needs the admin client: research_sessions' RLS policy scopes rows to their
+// owner (user_id = auth.uid()), but this is a network-wide public stat, not
+// a per-user one — the regular client would only ever see the current
+// viewer's own sessions.
 export async function getNetworkStats(): Promise<NetworkStats> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const [{ count: answersServed }, { data: settledAmounts }, { count: registeredSources }] = await Promise.all([
     supabase.from('research_sessions').select('*', { count: 'exact', head: true }).eq('status', 'completed'),

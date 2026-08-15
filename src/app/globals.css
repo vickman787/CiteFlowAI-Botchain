@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
-/* ── THE TERMINAL — phosphor-green command deck ─────────────────── */
+/* ── THE TERMINAL — cyan phosphor command deck ─────────────────── */
 
 @theme {
-  --color-paper: #0C0E0A;          /* page background */
-  --color-panel: #161A11;          /* raised surfaces */
-  --color-panel-deep: #12150E;     /* inputs, wells */
-  --color-ink: #E8EDDA;            /* primary text */
-  --color-soft-ink: #9BA588;       /* secondary text */
-  --color-olive: #8B9478;          /* muted text, labels */
-  --color-faint: #5A6350;          /* faintest text */
-  --color-signal-green: #C6FF4D;   /* phosphor accent */
+  --color-paper: #0A0E13;          /* page background */
+  --color-panel: #121A22;          /* raised surfaces */
+  --color-panel-deep: #0E141A;     /* inputs, wells */
+  --color-ink: #DCEAF2;            /* primary text */
+  --color-soft-ink: #7E97A3;       /* secondary text */
+  --color-olive: #6B838F;          /* muted text, labels */
+  --color-faint: #3E4C54;          /* faintest text */
+  --color-signal-green: #3FE7FF;   /* phosphor accent */
   --color-amber: #FFB454;          /* scores, warnings */
   --color-rust: #FF6B4A;           /* errors */
-  --color-border-subtle: rgba(232, 237, 218, 0.1);
-  --color-border-strong: rgba(232, 237, 218, 0.22);
+  --color-border-subtle: rgba(220, 234, 242, 0.1);
+  --color-border-strong: rgba(220, 234, 242, 0.22);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
@@ -24,7 +24,7 @@
 :root {
   --background: var(--color-paper);
   --foreground: var(--color-ink);
-  --green-glow: rgba(198, 255, 77, 0.14);
+  --green-glow: rgba(63, 231, 255, 0.14);
 }
 
 body {

@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import CopyButton from '@/components/CopyButton'
@@ -85,15 +86,21 @@ export default async function DashboardPage() {
     )
   }
 
+  // Reads below use the admin client: earnings are computed from
+  // payment_authorizations rows tied to the RESEARCHER's session, not the
+  // creator viewing this dashboard, so the RLS-scoped client silently
+  // returns nothing whenever those are different wallets (see treasury.ts).
+  const admin = createAdminClient()
+
   // Fetch profile
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('profiles')
     .select('wallet_address')
     .eq('id', user.id)
     .single()
 
   // Fetch creator profile & sources
-  const { data: creator } = await supabase
+  const { data: creator } = await admin
     .from('creator_profiles')
     .select('id')
     .eq('user_id', user.id)
@@ -104,7 +111,7 @@ export default async function DashboardPage() {
   let totalEarnings = 0
 
   if (creator) {
-    const { data } = await supabase
+    const { data } = await admin
       .from('sources')
       .select(`
         id, url, title, price_usdc, status, created_at,

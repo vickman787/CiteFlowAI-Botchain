@@ -1,10 +1,16 @@
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 import crypto from 'crypto'
 
 const PLATFORM_FEE_PERCENT = 0.20
 
 export async function authorizePayment(sessionId: string, sourceId: string, priceUsdt: number) {
-  const supabase = await createClient()
+  // Admin client: this is system-level bookkeeping (budget checks, authorization
+  // records) that also has to resolve the CREATOR's payout wallet, a different
+  // user than the researcher whose session this runs under. profiles' RLS policy
+  // only allows reading your own row (auth.uid() = id), which silently broke
+  // this lookup the moment researcher and creator were genuinely different people
+  // instead of the same wallet used for both roles during earlier testing.
+  const supabase = createAdminClient()
 
   // 1. Enforce Budget Limits
   const today = new Date().toISOString().split('T')[0]

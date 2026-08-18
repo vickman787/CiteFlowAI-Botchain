@@ -12,7 +12,6 @@ const evaluationSchema = z.object({
 
 const finalOutputSchema = z.object({
   answer: z.string(),
-  citationsUsed: z.array(z.string())
 })
 
 // Basic helper for Gemini REST API
@@ -279,28 +278,28 @@ export async function runResearchAgent(
   finalPrompt += `
     Return a JSON object matching this schema:
     {
-      "answer": "Your detailed answer...",
-      "citationsUsed": ["ID_of_source1", "ID_of_source2"]
+      "answer": "Your detailed answer..."
     }
-    
-    CRITICAL: The 'citationsUsed' array MUST contain ONLY the exact raw UUID strings of the sources provided above (e.g. "a1b2c3d4-..."). Do not use titles, "Source 1", or any other format. If you use a source, you MUST include its exact ID in this array so the creator can be compensated.
 
-    CRITICAL: The 'answer' text itself must read as plain, natural prose — do NOT append inline citation markers like "[a1b2c3d4-...]" or "[Source 1]" to it. Citations are tracked exclusively via the 'citationsUsed' array; the answer text should contain no bracketed IDs, footnote numbers, or source references at all.
+    The answer must read as natural prose — do NOT add bracketed IDs, footnote markers, or "[Source 1]"-style references inside it. Every source listed above already has payment reserved for it regardless of what this text contains, so there is no need to mark citations inline; just write a clear, accurate answer grounded in the sources provided.
   `
 
   const finalOutput = await callLLM(finalPrompt, finalOutputSchema, onProgress)
 
-  // 4. Authorize Payments ONLY for Used Citations (bookkeeping + wallet resolution;
-  // the actual on-chain transfer happens once, batched, in step 5 below)
-  if (onProgress) onProgress(`Authorizing payments for ${finalOutput.citationsUsed.length} citations explicitly used in the final answer...`)
+  // 4. Authorize Payments for every source the evaluation step already deemed
+  // relevant (step 2), not the model's self-reported citationsUsed from this
+  // second call. In practice the model sometimes writes an accurate answer
+  // grounded in a source's content but still omits it from citationsUsed —
+  // e.g. when it already "knows" the fact confidently enough that it doesn't
+  // feel it needs to cite it, even though the source was what earned its
+  // place in this prompt and had budget reserved for it. Evaluation is the
+  // real relevance gate; treat it as the payment trigger too.
+  if (onProgress) onProgress(`Authorizing payments for ${relevantSources.length} citation(s) evaluated as relevant...`)
 
   const payouts: PayoutEntry[] = []
   const authRecords: { authorizationId: string; sourceId: string }[] = []
 
-  for (const usedId of finalOutput.citationsUsed) {
-    const source = relevantSources.find(s => s.id === usedId)
-    if (!source) continue
-
+  for (const source of relevantSources) {
     try {
       const { authorizationId, recipient, amountUsdt } = await authorizePayment(sessionId, source.id, parseFloat(source.price_usdc))
 
@@ -357,7 +356,7 @@ export async function runResearchAgent(
 
   return {
     answer: finalOutput.answer,
-    citationsUsed: purchasedSources.filter(s => finalOutput.citationsUsed.includes(s.id)),
+    citationsUsed: purchasedSources,
     purchasedSources
   }
 

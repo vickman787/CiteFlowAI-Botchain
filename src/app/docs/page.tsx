@@ -12,9 +12,16 @@ export default function DocsPage() {
           Everything you need to know about using CiteFlowAI, whether you are researching topics or registering your own intellectual property.
         </p>
 
-        {/* Video Guide — TODO: record a BOT Chain walkthrough to replace this placeholder */}
-        <div className="relative w-full aspect-video rounded overflow-hidden shadow-lg border border-[var(--color-border-subtle)] bg-[var(--color-panel-deep)] flex items-center justify-center">
-          <p className="font-mono text-sm text-[var(--color-faint)]">Video walkthrough coming soon</p>
+        {/* Video Guide */}
+        <div className="relative w-full aspect-video rounded overflow-hidden shadow-lg border border-[var(--color-border-subtle)] bg-[var(--color-panel-deep)]">
+          <video
+            src="/social/citeflow-botchain-demo.mp4"
+            controls
+            preload="metadata"
+            className="absolute top-0 left-0 w-full h-full"
+          >
+            Your browser does not support the video tag.
+          </video>
         </div>
       </div>
 

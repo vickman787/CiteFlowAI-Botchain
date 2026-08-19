@@ -84,6 +84,44 @@ async function callOpenRouterJSON(prompt: string, schema: any) {
   }
 }
 
+async function callOpenAIJSON(prompt: string, schema: any) {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) throw new Error('OPENAI_API_KEY is not set')
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_RESEARCH_MODEL || 'gpt-4o-mini',
+      max_tokens: 700,
+      messages: [
+        {
+          role: 'system',
+          content: 'Return only a valid JSON object matching the requested schema. Do not use markdown code fences.'
+        },
+        { role: 'user', content: prompt }
+      ],
+      response_format: { type: 'json_object' }
+    })
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(`OpenAI API Error: ${data.error?.message || 'Unknown'}`)
+  }
+
+  try {
+    const parsed = JSON.parse(data.choices[0].message.content)
+    return schema.parse(parsed)
+  } catch {
+    throw new Error('Failed to parse OpenAI output according to Zod schema')
+  }
+}
+
 async function callAnthropicJSON(prompt: string, schema: any) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set')
@@ -136,6 +174,10 @@ async function callLLM(prompt: string, schema: any, onProgress?: (msg: string) =
     if (process.env.OPENROUTER_API_KEY) {
       if (onProgress) onProgress('Agent 1 rate limited. Falling back to Agent 2 (Secondary Node)...')
       return await callOpenRouterJSON(prompt, schema)
+    }
+    if (process.env.OPENAI_API_KEY) {
+      if (onProgress) onProgress('Primary agents unavailable. Falling back to OpenAI research agent...')
+      return await callOpenAIJSON(prompt, schema)
     }
     throw e
   }

@@ -295,7 +295,7 @@ export default function ResearchWorkspacePage() {
             </div>
             <div>
               {result.purchasedSources.length === 0 ? (
-                <p className="font-mono text-sm text-[var(--color-soft-ink)] p-6">No paid sources were required for this answer. Full budget refunded.</p>
+                <p className="font-mono text-sm text-[var(--color-soft-ink)] p-6">No paid sources were required for this answer. The full budget was returned to your wallet.</p>
               ) : (
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 result.purchasedSources.map((source: any, i: number) => (

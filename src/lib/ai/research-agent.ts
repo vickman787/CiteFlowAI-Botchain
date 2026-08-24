@@ -365,9 +365,12 @@ export async function runResearchAgent(
 
   // 5. Settle every citation payout AND the unspent-budget refund in one BOT Chain transaction
   // Waive the platform fee if no sources were useful (100% full refund)
-  const actualPlatformFee = totalSpentOnSources > 0 ? platformFee : 0;
+  const remainingAfterSources = Math.max(initialBudget - totalSpentOnSources, 0);
+  const actualPlatformFee = totalSpentOnSources > 0 && remainingAfterSources >= platformFee
+    ? platformFee
+    : 0;
   const unspentBudget = Math.max(initialBudget - totalSpentOnSources - actualPlatformFee, 0);
-  const refundAmount = walletAddress && unspentBudget >= 0.05 ? unspentBudget : 0;
+  const refundAmount = walletAddress && unspentBudget > 0 ? unspentBudget : 0;
 
   if (payouts.length > 0 || refundAmount > 0) {
     if (onProgress) onProgress(`Settling ${payouts.length} citation payment(s)${refundAmount > 0 ? ` and a $${refundAmount.toFixed(2)} refund` : ''} on BOT Chain...`)
@@ -392,8 +395,6 @@ export async function runResearchAgent(
       console.error('BOT Chain settlement failed:', err)
       if (onProgress) onProgress(`Settlement failed: ${err.message}. Authorized payments remain pending — no funds moved.`)
     }
-  } else if (walletAddress) {
-    if (onProgress) onProgress(`Unspent budget is $${unspentBudget.toFixed(2)} (below $0.05 minimum threshold). Retained by Treasury.`)
   }
 
   return {

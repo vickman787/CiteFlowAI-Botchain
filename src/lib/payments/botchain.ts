@@ -68,10 +68,14 @@ export async function settleSession(
   sessionId: string,
   payouts: PayoutEntry[],
   refundTo: string | undefined,
-  refundAmountUsdt: number
+  refundAmountUsdt: number,
+  treasuryFeeUsdt = 0
 ): Promise<string> {
   const account = getTreasuryAccount()
   const walletClient = createWalletClient({ account, chain: botChain, transport: http() })
+  const settlementPayouts = treasuryFeeUsdt > 0
+    ? [...payouts, { recipient: account.address, amountUsdt: treasuryFeeUsdt }]
+    : payouts
 
   // Supabase session ids are UUIDs — hash to a deterministic bytes32 for the contract's indexed event topic.
   const sessionIdBytes32 = keccak256(stringToHex(sessionId))
@@ -82,8 +86,8 @@ export async function settleSession(
     functionName: 'distribute',
     args: [
       sessionIdBytes32,
-      payouts.map((p) => p.recipient),
-      payouts.map((p) => parseUnits(p.amountUsdt.toFixed(USDT_DECIMALS), USDT_DECIMALS)),
+      settlementPayouts.map((p) => p.recipient),
+      settlementPayouts.map((p) => parseUnits(p.amountUsdt.toFixed(USDT_DECIMALS), USDT_DECIMALS)),
       (refundTo as `0x${string}` | undefined) || ZERO_ADDRESS,
       parseUnits(Math.max(refundAmountUsdt, 0).toFixed(USDT_DECIMALS), USDT_DECIMALS),
     ],

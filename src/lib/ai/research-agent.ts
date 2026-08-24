@@ -218,7 +218,7 @@ export async function runResearchAgent(
 ) {
   let maxBudget = initialBudget;
   let totalSpentOnSources = 0;
-  const platformFee = 0.20; // Ensure we keep $0.20 as platform revenue per prompt
+  let totalPlatformFees = 0;
   
   try {
   const supabase = createAdminClient()
@@ -354,8 +354,10 @@ export async function runResearchAgent(
         content: source.content,
       })
 
-      maxBudget -= amountUsdt;
-      totalSpentOnSources += amountUsdt;
+      const sourcePrice = parseFloat(source.price_usdc)
+      maxBudget -= sourcePrice;
+      totalSpentOnSources += sourcePrice;
+      totalPlatformFees += sourcePrice - amountUsdt;
       if (onProgress) onProgress(`Authorized $${amountUsdt.toFixed(2)} for ${source.title}`)
     } catch (e: any) {
       console.error(`Failed to authorize payment for source ${source.id}:`, e.message)
@@ -363,19 +365,14 @@ export async function runResearchAgent(
     }
   }
 
-  // 5. Settle every citation payout AND the unspent-budget refund in one BOT Chain transaction
-  // Waive the platform fee if no sources were useful (100% full refund)
-  const remainingAfterSources = Math.max(initialBudget - totalSpentOnSources, 0);
-  const actualPlatformFee = totalSpentOnSources > 0 && remainingAfterSources >= platformFee
-    ? platformFee
-    : 0;
-  const unspentBudget = Math.max(initialBudget - totalSpentOnSources - actualPlatformFee, 0);
+  // 5. Settle creator payouts, the 20% platform share, and the unspent-budget refund.
+  const unspentBudget = Math.max(initialBudget - totalSpentOnSources, 0);
   const refundAmount = walletAddress && unspentBudget > 0 ? unspentBudget : 0;
 
-  if (payouts.length > 0 || refundAmount > 0) {
-    if (onProgress) onProgress(`Settling ${payouts.length} citation payment(s)${refundAmount > 0 ? ` and a $${refundAmount.toFixed(2)} refund` : ''} on BOT Chain...`)
+  if (payouts.length > 0 || totalPlatformFees > 0 || refundAmount > 0) {
+    if (onProgress) onProgress(`Settling ${payouts.length} citation payment(s), a $${totalPlatformFees.toFixed(2)} treasury fee${refundAmount > 0 ? `, and a $${refundAmount.toFixed(2)} refund` : ''} on BOT Chain...`)
     try {
-      const txHash = await settleSession(sessionId, payouts, walletAddress, refundAmount)
+      const txHash = await settleSession(sessionId, payouts, walletAddress, refundAmount, totalPlatformFees)
 
       for (const rec of authRecords) {
         await supabase.from('payment_authorizations').update({ status: 'settled' }).eq('authorization_id', rec.authorizationId)
